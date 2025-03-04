@@ -5,7 +5,6 @@ import queue
 import time
 import base64
 import csv
-csv.field_size_limit(100000000)
 from tqdm import tqdm
 
 logging.basicConfig(
