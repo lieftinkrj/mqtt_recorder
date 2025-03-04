@@ -5,6 +5,7 @@ import queue
 import time
 import base64
 import csv
+csv.field_size_limit(100000000)
 from tqdm import tqdm
 
 logging.basicConfig(
@@ -67,7 +68,7 @@ class MqttRecorder:
             self.__client.subscribe('#', qos=qos)
         self.__recording = True
 
-    def start_replay(self, loop: bool):
+    def start_replay(self, loop: bool, topics: list):
         def decode_payload(payload, encode_b64):
             return base64.b64decode(payload) if encode_b64 else payload
 
@@ -84,8 +85,13 @@ class MqttRecorder:
                         first_message = False
                     mqtt_payload = decode_payload(row[1], self.__encode_b64)
                     retain = False if row[3] == 'False' else True
-                    self.__client.publish(topic=row[0], payload=mqtt_payload,
-                                          qos=int(row[2]), retain=retain)
+                    if type(topics) is list and len(topics) > 0:
+                        if row[0] in topics:
+                            self.__client.publish(topic=row[0], payload=mqtt_payload,
+                                                qos=int(row[2]), retain=retain)
+                    else:
+                        self.__client.publish(topic=row[0], payload=mqtt_payload,
+                                                qos=int(row[2]), retain=retain)
                 logger.info('End of replay')
                 if loop:
                     logger.info('Restarting replay')
